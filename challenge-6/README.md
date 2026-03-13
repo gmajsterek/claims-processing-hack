@@ -151,6 +151,31 @@ The validation workflow orchestrates both agents in sequence.
 
 Open [`validation_workflow.py`](validation_workflow.py):
 
+```mermaid
+flowchart TD
+    A["📄 Structured Claim JSON\n(from Challenge 2)"] --> B["🔍 Policy Matching Agent\n(Azure AI Search + GPT-4.1-mini)"]
+    B -->|"Matched policy:\n• policy name & code\n• coverage types\n• limits & deductibles\n• exclusions"| C["✅ Coverage Validation Agent\n(GPT-4.1-mini)"]
+    C --> D{"Coverage Decision"}
+    D -->|APPROVED| E["✅ Claim Covered\n• applicable coverage\n• deductible amount\n• coverage limit"]
+    D -->|DENIED| F["❌ Claim Denied\n• exclusions triggered\n• reasoning"]
+    D -->|PARTIAL_COVERAGE| G["⚠️ Partial Coverage\n• covered portions\n• excluded portions"]
+    E --> H["📋 Final Report\n(saved to results/)"]
+    F --> H
+    G --> H
+
+    subgraph "Policy Matching Agent"
+        B1["Search AI Search index\nby policy_number"] --> B2["Retrieve policy document"]
+        B2 --> B3["Extract coverage details\nvia GPT-4.1-mini"]
+    end
+
+    subgraph "Coverage Validation Agent"
+        C1["Compare claim request\nvs policy terms"] --> C2["Check exclusions"] --> C3["Render coverage\ndetermination"]
+    end
+
+    B -.-> B1
+    C -.-> C1
+```
+
 **Pipeline:**
 1. Read structured claim JSON (output from Challenge 2)
 2. **Policy Matching Agent** → Retrieve and parse the matching policy
